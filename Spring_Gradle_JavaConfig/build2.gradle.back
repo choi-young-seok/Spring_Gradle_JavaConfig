@@ -1,0 +1,187 @@
+apply plugin: 'java'			// JAVA 컴파일
+apply plugin: 'eclipse-wtp'		// eclipse war 프로젝트
+apply plugin: 'war'				// war 프로젝트 
+ 
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8' //인코딩을 UTF-8로 통일
+sourceCompatibility = 1.8		// Java Version
+targetCompatibility = 1.8		
+version = '1.0'
+ 
+//버전 관리
+def version = [
+    spring: '4.3.4.RELEASE',
+    servletAPI: '3.1.0',
+    commonsCollections: '3.2.1',
+    junit: '4.12',
+    slf4j: '1.7.12'
+]
+ 
+//프로젝트를 빌드하고 나면 프로젝트 정보도 같이 지워지는데, Gradle 프로젝트임을 인식 시켜준다
+//프로젝트 우클릭시 [run as] - [gradle build]가 표시되도록 해준다
+eclipse {
+    project.natures "org.springsource.ide.eclipse.gradle.core.nature"
+    wtp {
+        facet {
+            facet name: 'jst.web', version: '3.1' 		// Servlet Spec version 지정
+            facet name: 'jst.java', version: '1.8' 		// Java version 지정
+            // facet name: 'wst.jsdt.web' , version: '1.0' // Javascript 지정, 1.0
+        }
+    }
+}
+ 
+//jar 파일에 대해서 설정한다
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'Gradle Quickstart',
+                   'Implementation-Version': version
+    }
+    //manifest : MANIFEST.MF 파일에 들어갈 속성=값 정보를 설정한다. 이 파일은 jar 파일 안에 META-INF에 들어간다.
+    
+}
+ 
+//의존 라이브러리를 가져올 저장소 설정
+repositories {
+    mavenCentral()
+    maven { url "http://repo.spring.io/libs-release" } // maven repository url 지정
+    // mavenCentral() : Maven 중앙 서버를 저장소로 지정한다. 서버의 기본 URL은 http://repo1.maven.org/maven2/이다.
+}
+
+// part별 dependency 정리
+def compilelib = [
+	
+		"spring": ['org.springframework:spring-webmvc:${version.spring}',
+					'org.springframework:spring-context:${version.spring}',
+					'org.springframework:spring-context-support:${version.spring}',//벨로시티 추가
+					'org.springframework:spring-oxm:${version.spring}',//XML,JSON 추가 때문에. 
+					'org.springframework:spring-jdbc:${version.spring}', //MyBatis 추가
+					'org.springframework:spring-tx:${version.spring}' //MyBatis 추가
+					
+			],
+		
+		/*
+		"aop": ['cglib:cglib-nodep:2.2.2', // Spring 3.2.x 이상에서는 빼도 된다. 
+			],
+			
+		"Mybatis": ['org.mybatis:mybatis:3.2.2', //MyBatis 추가           
+					'org.mybatis:mybatis-spring:1.2.0', //MyBatis 추가         
+					//'mysql:mysql-connector-java:5.1.26', //MyBatis 추가          
+			],
+		
+		"Velocity": ['org.apache.velocity:velocity:1.7', //벨로시티 추가
+					 'velocity-tools:velocity-tools:2.0-beta1',
+					 'commons-digester:commons-digester:2.1'				 
+			
+			],
+		
+		"XmlJson": ['com.thoughtworks.xstream:xstream:1.4.7',//XML타입추가
+					'com.fasterxml.jackson.core:jackson-databind:2.5.0-rc1',//JSON 타입추가
+					'com.fasterxml.jackson.core:jackson-annotations:2.6.3',
+					'castor:castor:1.0',//unmarshal
+					'org.codehaus.castor:castor:1.2'
+			],
+		*/		
+		
+		"etc": ['commons-logging:commons-logging:1.2',
+				'ch.qos.logback:logback-classic:1.0.6',
+				'org.slf4j:slf4j-api:1.7.6',
+				'ch.qos.logback:logback-classic:1.1.2',
+				'commons-dbcp:commons-dbcp:1.4',	
+				'org.projectlombok:lombok:1.14.8',
+				'commons-fileupload:commons-fileupload:1.3.1', // 파일업로드
+				'javax.validation:validation-api:1.1.0.Final' // 밸리데이션
+			]	
+	]
+
+ 
+//의존성 라이브러리 주입
+//여기에 의존성 추가해준 라이브러리들이 자동으로 빌드된다.
+dependencies {
+    //providedCompile "javax.servlet:javax.servlet-api:${version.servletAPI}"
+    //compile "org.springframework:spring-webmvc:${version.spring}"
+    //compile "org.slf4j:slf4j-api:${version.slf4j}"
+    //compile group: 'commons-collections', name: 'commons-collections', version: "${version.commonsCollections}"
+    //testCompile group: 'junit', name: 'junit', version: "${version.junit}"
+    
+    /* 기존 dependencies
+    
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+
+    compile "org.springframework:spring-core:${version.spring}",
+            "org.springframework:spring-web:${version.spring}",
+            "org.springframework:spring-webmvc:${version.spring}",
+            "org.springframework:spring-beans:${version.spring}",
+            "org.springframework:spring-jdbc:${version.spring}",
+            "org.springframework:spring-expression:${version.spring}",
+            "org.springframework:spring-context-support:${version.spring}",
+            "org.springframework:spring-aop:${version.spring}",
+            "mysql:mysql-connector-java:5.1.39",
+            "org.mybatis:mybatis-spring:1.3.1",
+            "org.mybatis:mybatis:3.4.1"
+
+
+    compile("org.springframework:spring-context:${version.spring}") {
+        exclude group: 'commons-logging',
+                module: 'commons-logging'
+    }
+
+    testCompile "org.springframework:spring-test:${version.spring}"
+    testCompile "junit:junit:${version.junit}"
+
+    compile "org.slf4j:slf4j-api:${version.slf4j}"
+    runtime "org.slf4j:jcl-over-slf4j:${version.slf4j}",
+            "org.slf4j:slf4j-log4j12:${version.slf4j}"
+    runtime("log4j:log4j:1.2.17") {
+        exclude group: 'javax.mail', module: 'mail'
+        exclude group: 'javax.jms', module: 'jms'
+        exclude group: 'com.sun.jdmk', module: 'jmxtools'
+        exclude group: 'com.sun.jmx', module: 'jmxri'
+    }
+
+    providedCompile "javax.servlet:javax.servlet-api:3.0.1",
+            "javax.servlet.jsp:jsp-api:2.2"
+
+    runtime "javax.servlet:jstl:1.1.2"
+
+    compile "org.projectlombok:lombok:1.16.16"
+
+	//일단 몰라서 주석처리 나중에 공부후에 필요없으면 삭제할것 2019-01-04
+    //compile "org.aspectj:aspectjrt:${version.aspectj}",
+            //"org.aspectj:aspectjtools:${version.aspectj}",
+            //"org.aspectj:aspectjweaver:${version.aspectj}"
+            
+    //compile "com.fasterxml.jackson.core:jackson-core:${version.jackson}",
+            //"com.fasterxml.jackson.core:jackson-databind:${version.jackson}"
+    
+    기존 dependencies끝
+    */
+    
+    // part별 dependency 추가
+    compile compilelib.spring, compilelib.etc 
+    //compilelib.Mybatis, compilelib.Velocity, compilelib.XmlJson, 	
+	providedCompile "javax.servlet:javax.servlet-api:3.0.1"	
+    compile group: 'commons-collections', name: 'commons-collections', version: '3.2'	
+	testCompile 'org.springframework:spring-test:4.1.2.RELEASE',compilelib.aop, compilelib.Velocity, compilelib.XmlJson	
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+	runtime "javax.servlet:jstl:1.2"
+	
+	
+	//compile fileTree(dir: 'WebContent/WEB-INF/lib' , include: '*.jar')
+	//compile group: 'com.google.code.gson', name: 'gson', version: '2.3.1'
+}
+
+//test 정보를 설정한다
+test {
+    systemProperties 'property': 'value'
+}
+ 
+//아카이브파일(.jar) 배포를 설정한다
+uploadArchives {
+    repositories {
+       flatDir {
+           dirs 'repos'
+       }
+    }
+}
+
+// 출처 : http://aristatait.tistory.com/66
+// 출처 : http://dynaticy.tistory.com/entry/Gradle%EB%A1%9C-SpringMVC-%EC%95%84%EC%A3%BC-%EC%89%BD%EA%B2%8C-%EA%B5%AC%EC%B6%95%ED%95%98%EA%B8%B0-%EC%B4%88%EB%B3%B4%EC%9E%90%EC%9A%A9?category=536334
